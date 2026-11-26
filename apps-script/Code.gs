@@ -18,11 +18,12 @@ const COLS = ['id', 'created', 'source', 'date', 'slot', 'name', 'phone', 'plate
 const HEAD = ['รหัส', 'บันทึกเมื่อ', 'ช่องทาง', 'วันที่', 'ช่วงเวลา', 'ชื่อ-สกุล', 'โทรศัพท์', 'ทะเบียนรถ', 'บริการ', 'หมายเหตุ', 'สถานะ', 'หมายเหตุเจ้าหน้าที่', 'แก้ไขล่าสุด'];
 const STATUSES = ['รอ', 'กำลังให้บริการ', 'เสร็จสิ้น', 'ยกเลิก'];
 const TZ = 'Asia/Bangkok';
+const OTHER = 'อื่นๆ'; // เลือกบริการนี้แล้วต้องพิมพ์ระบุ
 const SESSION_SECONDS = 8 * 60 * 60;
 const MAX_FAILS = 5;          // รหัสผิดเกิน 5 ครั้งใน 15 นาที → ล็อก
 const MAX_BOOK_PER_MIN = 20;  // กันสแปมทั้งระบบ
 const DEFAULTS = [
-  ['services', 'ยื่นคำขอ / สอบถามข้อมูล\nรับเอกสารสิทธิ / รับเรื่องคืน\nชำระค่าธรรมเนียม\nขอคัดสำเนาเอกสาร\nอื่น ๆ', 'บรรทัดละ 1 บริการ'],
+  ['services', '# 1. การโอนและรับโอนสิทธิ\nขาย / ขายฝาก / ไถ่ถอนจากการขายฝาก\nให้ / แลกเปลี่ยน\nโอนมรดก / โอนตามคำสั่งศาล / โอนตามกฎหมาย\n# 2. ภาระผูกพันและหลักประกัน\nจำนอง / ไถ่ถอนจากจำนอง\nภาระจำยอม / สิทธิเก็บกิน / สิทธิอาศัย / สิทธิเหนือพื้นดิน\nเช่าที่ดิน / เช่าอสังหาริมทรัพย์\n# 3. ครอบครัวและการจัดการทรัพย์สิน\nลงชื่อคู่สมรส / แบ่งทรัพย์สินระหว่างคู่สมรส\n# 4. รูปแปลง\nรังวัดสอบเขต แบ่งแยก และรวมโฉนด\nโอนเป็นที่สาธารณประโยชน์ / แบ่งหักเป็นที่สาธารณประโยชน์\n# 5. อื่นๆ\nอื่นๆ', 'บรรทัดละ 1 บริการ · บรรทัดที่ขึ้นต้นด้วย # คือชื่อหมวด · "อื่นๆ" = ให้ผู้จองพิมพ์ระบุเอง'],
   ['slots', '08:30–10:00\n10:00–12:00\n13:00–14:30\n14:30–16:00', 'ช่วงเวลารับจอง บรรทัดละ 1 ช่วง'],
   ['perSlot', '5', 'รับจองได้กี่คันต่อช่วงเวลา'],
   ['daysAhead', '30', 'จองล่วงหน้าได้กี่วัน'],
@@ -41,7 +42,7 @@ function doGet() {
         taken[k] = (taken[k] || 0) + 1;
       }
     });
-    return json_({ services: s.services, slots: s.slots, perSlot: s.perSlot, daysAhead: s.daysAhead,
+    return json_({ services: s.services, serviceGroups: s.serviceGroups, slots: s.slots, perSlot: s.perSlot, daysAhead: s.daysAhead,
       closedDates: s.closedDates, today: today, taken: taken });
   } catch (err) {
     return json_({ error: err.message });
@@ -52,8 +53,17 @@ function settings_() {
   const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_SET);
   const m = {};
   if (sh && sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().forEach(r => m[r[0]] = String(r[1]));
+  // services: "# ชื่อหมวด" ตามด้วยบริการในหมวด บรรทัดละ 1
+  const serviceGroups = [];
+  lines_(m.services).forEach(l => {
+    if (l[0] === '#') serviceGroups.push({ label: l.replace(/^#+\s*/, ''), items: [] });
+    else {
+      if (!serviceGroups.length) serviceGroups.push({ label: '', items: [] });
+      serviceGroups[serviceGroups.length - 1].items.push(l);
+    }
+  });
   return {
-    services: lines_(m.services), slots: lines_(m.slots),
+    services: [].concat.apply([], serviceGroups.map(x => x.items)), serviceGroups: serviceGroups, slots: lines_(m.slots),
     perSlot: Math.max(1, Number(m.perSlot) || 5), daysAhead: Math.max(1, Number(m.daysAhead) || 30),
     closedDates: lines_(m.closedDates)
   };
@@ -141,6 +151,11 @@ function form_(b, s, needPhone) {
   if (!f.name) throw new Error('กรุณากรอกชื่อ-สกุล');
   if ((needPhone || f.phone) && !/^0\d{8,9}$/.test(f.phone)) throw new Error('เบอร์โทรศัพท์ไม่ถูกต้อง (ตัวเลข 9–10 หลัก ขึ้นต้นด้วย 0)');
   if (s.services.indexOf(f.service) < 0) throw new Error('กรุณาเลือกบริการ');
+  if (f.service === OTHER) {
+    const other = String(b.other || '').trim().slice(0, 200);
+    if (!other) throw new Error('กรุณาระบุบริการที่ต้องการ');
+    f.service = OTHER + ': ' + other;
+  }
   return f;
 }
 

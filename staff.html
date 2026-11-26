@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=1">
+<link rel="stylesheet" href="css/app.css?v=2">
 </head>
 <body>
 <header class="top"><div class="in">
@@ -52,6 +52,7 @@
       <label>ทะเบียนรถ <small>(ถ้ามี)</small> <input name="plate" maxlength="20"></label>
     </div>
     <label>บริการ <select name="service" id="aService" required></select></label>
+    <label id="aOtherBox" hidden>ระบุบริการ <input name="other" maxlength="200"></label>
     <label>หมายเหตุ <textarea name="note" rows="2" maxlength="500"></textarea></label>
     <p class="err" id="aErr" role="alert"></p>
     <button class="btn primary" id="aBtn">บันทึก</button>
@@ -59,7 +60,7 @@
 </dialog>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/common.js?v=1"></script>
-<script src="js/staff.js?v=1"></script>
+<script src="js/common.js?v=2"></script>
+<script src="js/staff.js?v=2"></script>
 </body>
 </html>

@@ -52,7 +52,8 @@ async function openApp() {
     return toast('โหลดตั้งค่าไม่สำเร็จ: ' + e.message, true);
   }
   $('#day').value = C.today;
-  $('#aService').innerHTML = C.services.map(s => `<option>${esc(s)}</option>`).join('');
+  $('#aService').innerHTML = serviceOptions(C);
+  bindOther($('#aService'), $('#aOtherBox'));
   load();
   setInterval(() => { if (!document.hidden && !busy && !$('#add').open) load(true); }, 60000);
 }
@@ -111,13 +112,13 @@ $('#rows').onchange = async e => {
 $('#day').onchange = () => load();
 $('#reload').onclick = () => load();
 
-$('#addOpen').onclick = () => { $('#addForm').reset(); $('#aErr').textContent = ''; $('#add').showModal(); };
+$('#addOpen').onclick = () => { $('#addForm').reset(); $('#aOtherBox').hidden = true; $('#aErr').textContent = ''; $('#add').showModal(); };
 $('#aClose').onclick = () => $('#add').close();
 $('#addForm').onsubmit = async e => {
   e.preventDefault();
   const f = Object.fromEntries(new FormData(e.target));
   const phone = f.phone.replace(/\D/g, '');
-  const why = !f.name.trim() ? 'กรุณากรอกชื่อ-สกุล' : phone && !/^0\d{8,9}$/.test(phone) ? 'เบอร์โทรศัพท์ไม่ถูกต้อง' : '';
+  const why = !f.name.trim() ? 'กรุณากรอกชื่อ-สกุล' : !f.service ? 'กรุณาเลือกบริการ' : f.service === OTHER && !f.other.trim() ? 'กรุณาระบุบริการ' : phone && !/^0\d{8,9}$/.test(phone) ? 'เบอร์โทรศัพท์ไม่ถูกต้อง' : '';
   $('#aErr').textContent = why;
   if (why) return;
   $('#aBtn').disabled = true;

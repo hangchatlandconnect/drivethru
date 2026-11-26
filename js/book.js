@@ -21,7 +21,8 @@ function closedReason(d) {
   }
   $('#date').min = C.today;
   $('#date').max = addDays(C.today, C.daysAhead);
-  $('#service').innerHTML = '<option value="">— เลือกบริการ —</option>' + C.services.map(s => `<option>${esc(s)}</option>`).join('');
+  $('#service').innerHTML = serviceOptions(C);
+  bindOther($('#service'), $('#otherBox'));
 })();
 
 $('#date').onchange = () => {
@@ -37,7 +38,7 @@ $('#date').onchange = () => {
 form.onsubmit = async e => {
   e.preventDefault();
   const f = Object.fromEntries(new FormData(form));
-  const why = !f.date ? 'กรุณาเลือกวันที่' : closedReason(f.date) || (!f.slot ? 'กรุณาเลือกช่วงเวลา' : !f.service ? 'กรุณาเลือกบริการ'
+  const why = !f.date ? 'กรุณาเลือกวันที่' : closedReason(f.date) || (!f.slot ? 'กรุณาเลือกช่วงเวลา' : !f.service ? 'กรุณาเลือกบริการ' : f.service === OTHER && !f.other.trim() ? 'กรุณาระบุบริการที่ต้องการ'
     : !f.name.trim() ? 'กรุณากรอกชื่อ-สกุล' : !/^0\d{8,9}$/.test(f.phone.replace(/\D/g, '')) ? 'เบอร์โทรศัพท์ไม่ถูกต้อง (ตัวเลข 9–10 หลัก ขึ้นต้นด้วย 0)'
     : !f.consent ? 'กรุณายินยอมให้ใช้ข้อมูลเพื่อการนัดหมาย' : '');
   $('#err').textContent = why;
@@ -46,7 +47,7 @@ form.onsubmit = async e => {
   try {
     const { code } = await call({ action: 'book', ...f, consent: true });
     $('#code').textContent = code;
-    $('#summary').innerHTML = [['วันที่', thaiDate(f.date)], ['เวลา', f.slot + ' น.'], ['บริการ', f.service], ['ชื่อ', f.name], ['ทะเบียนรถ', f.plate || '-']]
+    $('#summary').innerHTML = [['วันที่', thaiDate(f.date)], ['เวลา', f.slot + ' น.'], ['บริการ', f.service === OTHER ? OTHER + ': ' + f.other : f.service], ['ชื่อ', f.name], ['ทะเบียนรถ', f.plate || '-']]
       .map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
     form.hidden = true;
     $('#done').hidden = false;

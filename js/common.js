@@ -1,6 +1,7 @@
 // ใส่ URL ของ Apps Script web app (ลงท้ายด้วย /exec) — เว้นว่าง = โหมดตัวอย่าง เก็บข้อมูลในเบราว์เซอร์นี้เท่านั้น
 const SCRIPT_URL = '';
 const DEMO = !SCRIPT_URL;
+const OTHER = 'อื่นๆ'; // เลือกบริการนี้แล้วต้องพิมพ์ระบุ (ตรงกับ Code.gs)
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -20,6 +21,20 @@ async function call(body) {
   const d = await r.json();
   if (d.error) throw new Error(d.error);
   return d;
+}
+
+// ตัวเลือกบริการแบ่งตามหมวด (หมวดไม่มีชื่อ = ไม่ใส่ optgroup)
+const serviceOptions = C => '<option value="">— เลือกบริการ —</option>' + C.serviceGroups.map(g => {
+  const items = g.items.map(s => `<option>${esc(s)}</option>`).join('');
+  return g.label ? `<optgroup label="${esc(g.label)}">${items}</optgroup>` : items;
+}).join('');
+
+// เลือก "อื่นๆ" → แสดงและบังคับช่องระบุ
+function bindOther(select, box) {
+  select.addEventListener('change', () => {
+    box.hidden = select.value !== OTHER;
+    box.querySelector('input').required = !box.hidden;
+  });
 }
 
 // วันที่ yyyy-mm-dd → "พฤ. 26 พ.ย. 2569"
@@ -44,7 +59,13 @@ const Demo = {
     this.rows().filter(r => r.source === 'จองออนไลน์' && r.status !== 'ยกเลิก')
       .forEach(r => taken[r.date + '|' + r.slot] = (taken[r.date + '|' + r.slot] || 0) + 1);
     return {
-      services: ['ยื่นคำขอ / สอบถามข้อมูล', 'รับเอกสารสิทธิ / รับเรื่องคืน', 'ชำระค่าธรรมเนียม', 'ขอคัดสำเนาเอกสาร', 'อื่น ๆ'],
+      serviceGroups: [
+        { label: '1. การโอนและรับโอนสิทธิ', items: ['ขาย / ขายฝาก / ไถ่ถอนจากการขายฝาก', 'ให้ / แลกเปลี่ยน', 'โอนมรดก / โอนตามคำสั่งศาล / โอนตามกฎหมาย'] },
+        { label: '2. ภาระผูกพันและหลักประกัน', items: ['จำนอง / ไถ่ถอนจากจำนอง', 'ภาระจำยอม / สิทธิเก็บกิน / สิทธิอาศัย / สิทธิเหนือพื้นดิน', 'เช่าที่ดิน / เช่าอสังหาริมทรัพย์'] },
+        { label: '3. ครอบครัวและการจัดการทรัพย์สิน', items: ['ลงชื่อคู่สมรส / แบ่งทรัพย์สินระหว่างคู่สมรส'] },
+        { label: '4. รูปแปลง', items: ['รังวัดสอบเขต แบ่งแยก และรวมโฉนด', 'โอนเป็นที่สาธารณประโยชน์ / แบ่งหักเป็นที่สาธารณประโยชน์'] },
+        { label: '5. อื่นๆ', items: [OTHER] }
+      ],
       slots: ['08:30–10:00', '10:00–12:00', '13:00–14:30', '14:30–16:00'],
       perSlot: 5, daysAhead: 30, closedDates: [], today: this.today(), taken
     };
@@ -63,7 +84,7 @@ const Demo = {
       if (!b.name) throw new Error('กรุณากรอกชื่อ-สกุล');
       const id = Math.random().toString(36).slice(2, 8).toUpperCase();
       rows.push({ id, created: now, source: b.action === 'book' ? 'จองออนไลน์' : 'หน้างาน', date: b.date || this.today(),
-        slot: b.slot || '', name: b.name, phone: b.phone || '', plate: b.plate || '', service: b.service, note: b.note || '',
+        slot: b.slot || '', name: b.name, phone: b.phone || '', plate: b.plate || '', service: b.service === OTHER ? OTHER + ': ' + b.other : b.service, note: b.note || '',
         status: 'รอ', staffNote: '', updated: now });
       this.save(rows);
       return { code: id };

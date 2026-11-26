@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=1">
+<link rel="stylesheet" href="css/app.css?v=2">
 </head>
 <body>
 <header class="top"><div class="in">
@@ -26,6 +26,7 @@
       <label>ช่วงเวลา <select id="slot" name="slot" required><option value="">— เลือกวันที่ก่อน —</option></select></label>
     </div>
     <label>บริการ <select id="service" name="service" required></select></label>
+    <label id="otherBox" hidden>ระบุบริการที่ต้องการ <input name="other" maxlength="200"></label>
     <div class="grid2">
       <label>ชื่อ-สกุล <input name="name" autocomplete="name" maxlength="100" required></label>
       <label>โทรศัพท์ <input name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="08xxxxxxxx" required></label>
@@ -49,7 +50,7 @@
 </main>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/common.js?v=1"></script>
-<script src="js/book.js?v=1"></script>
+<script src="js/common.js?v=2"></script>
+<script src="js/book.js?v=2"></script>
 </body>
 </html>
