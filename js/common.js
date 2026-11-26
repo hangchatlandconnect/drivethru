@@ -37,6 +37,8 @@ function bindOther(select, box) {
   });
 }
 
+const STATUSES = ['รอ', 'กำลังให้บริการ', 'เสร็จสิ้น', 'ยกเลิก'];
+
 // วันที่ yyyy-mm-dd → "พฤ. 26 พ.ย. 2569"
 const thaiDate = d => new Date(d + 'T00:00:00').toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -55,7 +57,8 @@ const Demo = {
   save(r) { try { localStorage.setItem(this.KEY, JSON.stringify(r)); } catch {} },
   today: () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10),
   config() {
-    const taken = {};
+    const taken = {}, today = this.today();
+    const board = this.rows().filter(r => r.date === today).map(r => ({ queue: r.queue, time: r.slot || r.created.slice(11, 16), status: r.status }));
     this.rows().filter(r => r.source === 'จองออนไลน์' && r.status !== 'ยกเลิก')
       .forEach(r => taken[r.date + '|' + r.slot] = (taken[r.date + '|' + r.slot] || 0) + 1);
     return {
@@ -67,7 +70,7 @@ const Demo = {
         { label: '5. อื่นๆ', items: [OTHER] }
       ],
       slots: ['08:30–10:00', '10:00–12:00', '13:00–14:30', '14:30–16:00'],
-      perSlot: 5, daysAhead: 30, closedDates: [], today: this.today(), taken
+      perSlot: 5, daysAhead: 30, closedDates: [], today, taken, board
     };
   },
   call(b) {
@@ -82,12 +85,13 @@ const Demo = {
     }
     if (b.action === 'book' || b.action === 'add') {
       if (!b.name) throw new Error('กรุณากรอกชื่อ-สกุล');
-      const id = Math.random().toString(36).slice(2, 8).toUpperCase();
-      rows.push({ id, created: now, source: b.action === 'book' ? 'จองออนไลน์' : 'หน้างาน', date: b.date || this.today(),
+      const id = Math.random().toString(36).slice(2, 8).toUpperCase(), date = b.date || this.today();
+      const queue = rows.filter(r => r.date === date).reduce((m, r) => Math.max(m, r.queue), 0) + 1;
+      rows.push({ id, queue, created: now, source: b.action === 'book' ? 'จองออนไลน์' : 'หน้างาน', date,
         slot: b.slot || '', name: b.name, phone: b.phone || '', plate: b.plate || '', service: b.service === OTHER ? OTHER + ': ' + b.other : b.service, note: b.note || '',
         status: 'รอ', staffNote: '', updated: now });
       this.save(rows);
-      return { code: id };
+      return { code: id, queue };
     }
     throw new Error('ไม่รู้จักคำสั่ง');
   }

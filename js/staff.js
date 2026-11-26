@@ -1,6 +1,5 @@
 // หน้าเจ้าหน้าที่: รายการรายวัน · เปลี่ยนสถานะ/หมายเหตุแล้วบันทึกทันที · บันทึกรับเรื่องหน้างาน
 const TOKEN_KEY = 'dt_token';
-const STATUSES = ['รอ', 'กำลังให้บริการ', 'เสร็จสิ้น', 'ยกเลิก'];
 let C, rows = [], busy = false;
 
 const token = {
@@ -72,42 +71,48 @@ async function load(quiet) {
 
 function render() {
   // เรียงตามช่วงเวลา (หน้างานไม่มีช่วงเวลา → ใช้เวลาที่บันทึก) แล้วตามลำดับที่บันทึก
-  const key = r => (r.slot || r.created.slice(11, 16)) + r.created;
+  const key = r => (r.slot || r.created.slice(11, 16)) + String(r.queue).padStart(4, '0');
   rows.sort((a, b) => key(a).localeCompare(key(b)));
   const n = s => rows.filter(r => r.status === s).length;
   $('#stats').innerHTML = [['ทั้งหมด', rows.length], ...STATUSES.map(s => [s, n(s)])]
     .map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
   $('#rows').innerHTML = rows.length ? rows.map(r => `
     <tr data-id="${esc(r.id)}" class="st-${STATUSES.indexOf(r.status)}">
+      <td class="qno">${esc(r.queue)}</td>
       <td class="mono">${esc(r.id)}</td>
       <td>${esc(r.slot || r.created.slice(11, 16) + ' น.')}</td>
       <td>${esc(r.name)}${r.phone ? `<br><a href="tel:${esc(r.phone)}">${esc(r.phone)}</a>` : ''}</td>
       <td>${esc(r.plate || '-')}</td>
       <td>${esc(r.service)}${r.note ? `<br><small>${esc(r.note)}</small>` : ''}</td>
       <td><span class="tag${r.source === 'หน้างาน' ? ' walk' : ''}">${esc(r.source)}</span></td>
-      <td><select aria-label="สถานะของ ${esc(r.id)}">${STATUSES.map(s => `<option${s === r.status ? ' selected' : ''}>${s}</option>`).join('')}</select></td>
+      <td><div class="seg" role="group" aria-label="สถานะคิวที่ ${esc(r.queue)}">${STATUSES.map((s, i) =>
+        `<button type="button" class="s${i}" data-s="${s}" aria-pressed="${s === r.status}">${s}</button>`).join('')}</div></td>
       <td><input aria-label="หมายเหตุเจ้าหน้าที่ของ ${esc(r.id)}" value="${esc(r.staffNote)}" maxlength="500"></td>
-    </tr>`).join('') : '<tr><td colspan="8" class="none">ยังไม่มีรายการในวันนี้</td></tr>';
+    </tr>`).join('') : '<tr><td colspan="9" class="none">ยังไม่มีรายการในวันนี้</td></tr>';
 }
 
-// เปลี่ยนสถานะหรือหมายเหตุ → บันทึกทันที
-$('#rows').onchange = async e => {
-  const tr = e.target.closest('tr[data-id]');
-  if (!tr) return;
+// กดปุ่มสถานะ หรือแก้หมายเหตุ → บันทึกทันที
+$('#rows').onclick = e => {
+  const btn = e.target.closest('.seg button');
+  if (btn && btn.getAttribute('aria-pressed') !== 'true') save(btn.closest('tr'), btn.dataset.s);
+};
+$('#rows').onchange = e => { if (e.target.matches('input')) save(e.target.closest('tr')); };
+
+async function save(tr, status) {
   const r = rows.find(x => x.id === tr.dataset.id);
-  const next = { status: tr.querySelector('select').value, staffNote: tr.querySelector('input').value };
+  const next = { status: status || r.status, staffNote: tr.querySelector('input').value };
   busy = true;
   try {
     await auth({ action: 'status', id: r.id, ...next });
     Object.assign(r, next);
-    toast('บันทึก ' + r.id + ' แล้ว');
+    toast(`คิวที่ ${r.queue}: ${next.status}`);
   } catch (err) {
     toast(err.message, true);
   } finally {
     busy = false;
     render();
   }
-};
+}
 
 $('#day').onchange = () => load();
 $('#reload').onclick = () => load();
@@ -123,9 +128,9 @@ $('#addForm').onsubmit = async e => {
   if (why) return;
   $('#aBtn').disabled = true;
   try {
-    const { code } = await auth({ action: 'add', ...f, date: $('#day').value });
+    const { queue } = await auth({ action: 'add', ...f, date: $('#day').value });
     $('#add').close();
-    toast('บันทึกแล้ว รหัส ' + code);
+    toast('บันทึกแล้ว คิวที่ ' + queue);
     load();
   } catch (err) {
     $('#aErr').textContent = err.message;

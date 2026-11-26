@@ -2,7 +2,7 @@
  * Drive-Thru สำนักงานที่ดินจังหวัดลำปาง สาขาห้างฉัตร — หลังบ้านบน Google Sheet
  * วางทั้งไฟล์นี้ใน Apps Script ของชีต (ส่วนขยาย → Apps Script)
  *
- *   GET                                         → ตั้งค่า + จำนวนคิวที่จองแล้วต่อช่วงเวลา (ไม่มีข้อมูลส่วนบุคคล)
+ *   GET                                         → ตั้งค่า + จำนวนคิวที่จองแล้วต่อช่วงเวลา + กระดานคิววันนี้ (ไม่มีข้อมูลส่วนบุคคล)
  *   POST {action:'book', ...ฟอร์ม}              → ประชาชนจองคิว → {code}
  *   POST {action:'login', user, pass}           → {token} ใช้ได้ 8 ชม.
  *   POST {action:'list', token, date}           → รายการของวันนั้น (เฉพาะเจ้าหน้าที่)
@@ -14,8 +14,8 @@
 
 const SHEET_REQ = 'รายการ';
 const SHEET_SET = 'ตั้งค่า';
-const COLS = ['id', 'created', 'source', 'date', 'slot', 'name', 'phone', 'plate', 'service', 'note', 'status', 'staffNote', 'updated'];
-const HEAD = ['รหัส', 'บันทึกเมื่อ', 'ช่องทาง', 'วันที่', 'ช่วงเวลา', 'ชื่อ-สกุล', 'โทรศัพท์', 'ทะเบียนรถ', 'บริการ', 'หมายเหตุ', 'สถานะ', 'หมายเหตุเจ้าหน้าที่', 'แก้ไขล่าสุด'];
+const COLS = ['id', 'created', 'source', 'date', 'slot', 'name', 'phone', 'plate', 'service', 'note', 'status', 'staffNote', 'updated', 'queue'];
+const HEAD = ['รหัส', 'บันทึกเมื่อ', 'ช่องทาง', 'วันที่', 'ช่วงเวลา', 'ชื่อ-สกุล', 'โทรศัพท์', 'ทะเบียนรถ', 'บริการ', 'หมายเหตุ', 'สถานะ', 'หมายเหตุเจ้าหน้าที่', 'แก้ไขล่าสุด', 'ลำดับคิว'];
 const STATUSES = ['รอ', 'กำลังให้บริการ', 'เสร็จสิ้น', 'ยกเลิก'];
 const TZ = 'Asia/Bangkok';
 const OTHER = 'อื่นๆ'; // เลือกบริการนี้แล้วต้องพิมพ์ระบุ
@@ -35,15 +35,16 @@ function doGet() {
   try {
     const s = settings_();
     const today = today_();
-    const taken = {};
+    const taken = {}, board = [];
     rows_().forEach(r => {
+      if (r.date === today) board.push({ queue: Number(r.queue) || 0, time: r.slot || r.created.slice(11, 16), status: r.status });
       if (r.source === 'จองออนไลน์' && r.date >= today && r.status !== 'ยกเลิก') {
         const k = r.date + '|' + r.slot;
         taken[k] = (taken[k] || 0) + 1;
       }
     });
     return json_({ services: s.services, serviceGroups: s.serviceGroups, slots: s.slots, perSlot: s.perSlot, daysAhead: s.daysAhead,
-      closedDates: s.closedDates, today: today, taken: taken });
+      closedDates: s.closedDates, today: today, taken: taken, board: board });
   } catch (err) {
     return json_({ error: err.message });
   }
@@ -87,11 +88,11 @@ function lines_(v) {
 function doPost(e) {
   try {
     const b = JSON.parse(e.postData.contents);
-    if (b.action === 'book') return json_({ code: book_(b) });
+    if (b.action === 'book') return json_(book_(b));
     if (b.action === 'login') return json_({ token: login_(b.user, b.pass) });
     if (!validToken_(b.token)) throw new Error('หมดเวลาเข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่');
     if (b.action === 'list') return json_({ rows: rows_().filter(r => r.date === String(b.date)) });
-    if (b.action === 'add') return json_({ code: add_(b) });
+    if (b.action === 'add') return json_(add_(b));
     if (b.action === 'status') return json_({ ok: setStatus_(b) });
     throw new Error('ไม่รู้จักคำสั่ง');
   } catch (err) {
@@ -169,13 +170,15 @@ function dateError_(d, s) {
   return '';
 }
 
+// เรียกภายใต้ lock เท่านั้น — ลำดับคิวนับต่อวัน (ต่อจากเลขมากสุดของวันนั้น) รวมจองออนไลน์และหน้างาน
 function append_(source, f) {
   const code = Utilities.getUuid().replace(/-/g, '').slice(0, 6).toUpperCase();
+  const queue = rows_().filter(r => r.date === f.date).reduce((m, r) => Math.max(m, Number(r.queue) || 0), 0) + 1;
   const now = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss');
-  const rec = { id: code, created: now, source: source, status: 'รอ', staffNote: '', updated: now };
+  const rec = { id: code, created: now, source: source, status: 'รอ', staffNote: '', updated: now, queue: queue };
   Object.keys(f).forEach(k => rec[k] = f[k]);
   SpreadsheetApp.getActive().getSheetByName(SHEET_REQ).appendRow(COLS.map(c => text_(rec[c])));
-  return code;
+  return { code: code, queue: queue };
 }
 
 function setStatus_(b) {
@@ -263,7 +266,7 @@ function setup() {
   const ss = SpreadsheetApp.getActive();
   if (!ss.getSheetByName(SHEET_REQ)) {
     const sh = ss.insertSheet(SHEET_REQ);
-    sh.getRange('A:M').setNumberFormat('@'); // วันที่/เบอร์โทรเก็บเป็นข้อความ — ไม่ให้ชีตแปลงเป็นวันที่หรือตัด 0 หน้า
+    sh.getRange('A:N').setNumberFormat('@'); // วันที่/เบอร์โทรเก็บเป็นข้อความ — ไม่ให้ชีตแปลงเป็นวันที่หรือตัด 0 หน้า
     sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]).setFontWeight('bold');
     sh.setFrozenRows(1);
   }

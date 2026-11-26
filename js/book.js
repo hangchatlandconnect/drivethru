@@ -21,9 +21,29 @@ function closedReason(d) {
   }
   $('#date').min = C.today;
   $('#date').max = addDays(C.today, C.daysAhead);
+  renderBoard();
+  setInterval(refresh, 30000);
   $('#service').innerHTML = serviceOptions(C);
   bindOther($('#service'), $('#otherBox'));
 })();
+
+// กระดานคิววันนี้: เลขคิว เวลา สถานะ เท่านั้น — ไม่มีข้อมูลส่วนบุคคล
+function renderBoard() {
+  const q = C.board.slice().sort((a, b) => (a.time + String(a.queue).padStart(4, '0')).localeCompare(b.time + String(b.queue).padStart(4, '0')));
+  const serving = q.filter(x => x.status === 'กำลังให้บริการ').map(x => x.queue);
+  $('#bDate').textContent = thaiDate(C.today);
+  $('#now').innerHTML = serving.length ? `กำลังให้บริการ: คิวที่ <b>${serving.join(', ')}</b>` : 'ยังไม่มีคิวที่กำลังให้บริการ';
+  $('#board').innerHTML = q.length ? q.map(x => `<li class="st-${STATUSES.indexOf(x.status)}"><b>${x.queue}</b><span>${esc(x.time)}</span><em>${esc(x.status)}</em></li>`).join('')
+    : '<li class="empty">ยังไม่มีคิววันนี้</li>';
+}
+
+async function refresh() {
+  if (document.hidden) return;
+  try {
+    C = await getConfig();
+    renderBoard();
+  } catch {} // พลาดรอบนี้ ไว้รอบหน้า
+}
 
 $('#date').onchange = () => {
   const d = $('#date').value, why = d && closedReason(d);
@@ -45,7 +65,9 @@ form.onsubmit = async e => {
   if (why) return;
   $('#submit').disabled = true;
   try {
-    const { code } = await call({ action: 'book', ...f, consent: true });
+    const { code, queue } = await call({ action: 'book', ...f, consent: true });
+    $('#queue').textContent = queue;
+    refresh();
     $('#code').textContent = code;
     $('#summary').innerHTML = [['วันที่', thaiDate(f.date)], ['เวลา', f.slot + ' น.'], ['บริการ', f.service === OTHER ? OTHER + ': ' + f.other : f.service], ['ชื่อ', f.name], ['ทะเบียนรถ', f.plate || '-']]
       .map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');

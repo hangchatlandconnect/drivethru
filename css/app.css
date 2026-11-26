@@ -69,7 +69,7 @@ textarea { resize: vertical; line-height: 1.5; }
 .stat b { font: 600 1.5rem/1.2 var(--head); color: var(--green-950); }
 .stat span { color: var(--muted); font-size: .9rem; }
 .tablewrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 960px; }
+table { width: 100%; border-collapse: collapse; min-width: 1180px; }
 th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 th { font: 600 .9rem var(--head); color: var(--muted); background: var(--soft); }
 td small { color: var(--muted); }
@@ -79,8 +79,38 @@ td select, td input { min-height: 40px; }
 .tag { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--green-100); color: var(--green-900); font-size: .85rem; white-space: nowrap; }
 .tag.walk { background: var(--gold-soft); color: #5a430c; }
 tr.st-1 { background: #fff8e6; }          /* กำลังให้บริการ */
-tr.st-2 td:not(:nth-child(7)):not(:nth-child(8)) { color: var(--muted); } /* เสร็จสิ้น */
-tr.st-3 td:not(:nth-child(7)):not(:nth-child(8)) { color: var(--muted); text-decoration: line-through; } /* ยกเลิก */
+tr.st-2 td:not(:nth-child(8)):not(:nth-child(9)) { color: var(--muted); } /* เสร็จสิ้น */
+tr.st-3 td:not(:nth-child(8)):not(:nth-child(9)) { color: var(--muted); text-decoration: line-through; } /* ยกเลิก */
+.qno { font: 600 1.4rem/1.2 var(--head); color: var(--green-700); }
+
+/* ปุ่มสถานะ — กดครั้งเดียวบันทึกเลย */
+.seg { display: flex; gap: 4px; }
+.seg button { min-height: 40px; padding: 4px 10px; border: 1px solid var(--line); background: #fff; border-radius: 6px; cursor: pointer; font-size: .88rem; white-space: nowrap; }
+.seg button:hover { border-color: var(--green-600); }
+.seg button[aria-pressed="true"] { color: #fff; font-weight: 600; cursor: default; }
+.seg .s0[aria-pressed="true"] { background: var(--muted); border-color: var(--muted); }
+.seg .s1[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: var(--green-950); }
+.seg .s2[aria-pressed="true"] { background: var(--green-700); border-color: var(--green-700); }
+.seg .s3[aria-pressed="true"] { background: var(--maroon); border-color: var(--maroon); }
+
+/* กระดานคิววันนี้ (หน้าแรก) */
+.board { padding: 20px 24px; margin-bottom: 20px; display: grid; gap: 10px; }
+.board-hd { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.board .hint { margin: 0; font-size: .85rem; }
+.now { margin: 0; padding: 10px 14px; border-radius: 8px; background: var(--gold-soft); color: #5a430c; font-weight: 500; }
+.now b { font: 600 1.4rem var(--head); color: var(--green-950); }
+.queue { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.queue li { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; background: #fff; }
+.queue b { font: 600 1.6rem/1.1 var(--head); color: var(--green-950); }
+.queue span { font-size: .82rem; color: var(--muted); }
+.queue em { font-style: normal; font-size: .85rem; font-weight: 600; color: var(--muted); }
+.queue .st-1 { background: var(--gold-soft); border-color: var(--gold); }
+.queue .st-1 em { color: #5a430c; }
+.queue .st-2 em { color: var(--green-700); }
+.queue .st-2 b, .queue .st-3 b { color: var(--muted); }
+.queue .st-3 em { color: var(--maroon); }
+.queue .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); border-style: dashed; padding: 16px; }
+.form h2 { font-size: 1.2rem; }
 
 dialog { border: 0; padding: 0; border-radius: 10px; width: min(560px, calc(100% - 24px)); box-shadow: 0 20px 60px -10px rgba(0,0,0,.4); }
 dialog::backdrop { background: rgba(10,44,29,.55); }

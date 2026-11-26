@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=2">
+<link rel="stylesheet" href="css/app.css?v=3">
 </head>
 <body>
 <header class="top"><div class="in">
@@ -19,7 +19,15 @@
 <div class="demo" id="demo" hidden>โหมดตัวอย่าง — ข้อมูลเก็บในเบราว์เซอร์นี้เท่านั้น ยังไม่ได้เชื่อมกับ Google Sheet</div>
 
 <main class="narrow">
+  <section class="panel board" aria-labelledby="bTitle">
+    <div class="board-hd"><h2 id="bTitle">คิววันนี้</h2><span class="hint" id="bDate"></span></div>
+    <p class="now" id="now" aria-live="polite"></p>
+    <ol class="queue" id="board"></ol>
+    <p class="hint">อัปเดตอัตโนมัติทุก 30 วินาที</p>
+  </section>
+
   <form class="panel form" id="book" novalidate>
+    <h2>จองคิวล่วงหน้า</h2>
     <p class="lead">จองช่วงเวลาล่วงหน้า แล้วขับรถเข้าช่อง Drive-Thru ตามเวลานัด ไม่ต้องลงจากรถ</p>
     <div class="grid2">
       <label>วันที่ต้องการรับบริการ <input type="date" id="date" name="date" required></label>
@@ -41,16 +49,17 @@
 
   <section class="panel done" id="done" hidden>
     <h2>จองคิวเรียบร้อย</h2>
-    <p>รหัสการจองของท่าน</p>
-    <p class="code" id="code"></p>
+    <p>ลำดับคิวของท่าน</p>
+    <p class="code" id="queue"></p>
+    <p>รหัสการจอง <b class="mono" id="code"></b></p>
     <dl id="summary"></dl>
-    <p class="hint">กรุณาจดหรือถ่ายภาพหน้าจอนี้ไว้ แจ้งรหัสกับเจ้าหน้าที่ที่ช่อง Drive-Thru · หากต้องการยกเลิกหรือเปลี่ยนเวลา กรุณาโทรแจ้งสำนักงาน</p>
+    <p class="hint">กรุณาจดหรือถ่ายภาพหน้าจอนี้ไว้ แจ้งลำดับคิวและรหัสกับเจ้าหน้าที่ที่ช่อง Drive-Thru · ติดตามสถานะได้ที่ "คิววันนี้" ในวันนัด · หากต้องการยกเลิกหรือเปลี่ยนเวลา กรุณาโทรแจ้งสำนักงาน</p>
     <button class="btn" id="again">จองคิวอื่น</button>
   </section>
 </main>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/common.js?v=2"></script>
-<script src="js/book.js?v=2"></script>
+<script src="js/common.js?v=3"></script>
+<script src="js/book.js?v=3"></script>
 </body>
 </html>
