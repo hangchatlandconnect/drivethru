@@ -21,6 +21,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .logo { width: 64px; height: auto; flex: none; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
 .top h1 { color: #fff; font-size: clamp(1.25rem, 1rem + 1vw, 1.7rem); font-weight: 600; }
 .top p { margin: 2px 0 0; color: #cfe0d5; font-size: .95rem; }
+.top .desc { margin-top: 6px; color: #fff; max-width: 60ch; line-height: 1.5; }
 .top a, .link { color: #cfe0d5; font-size: .92rem; text-decoration: none; border: 0; border-bottom: 1px solid rgba(255,255,255,.3); background: none; padding: 0; cursor: pointer; }
 .top a:hover, .link:hover { color: #fff; }
 .topnav { display: flex; gap: 16px; align-items: center; }
