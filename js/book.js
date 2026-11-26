@@ -27,14 +27,19 @@ function closedReason(d) {
   bindOther($('#service'), $('#otherBox'));
 })();
 
-// กระดานคิววันนี้: เลขคิว เวลา สถานะ เท่านั้น — ไม่มีข้อมูลส่วนบุคคล
+// กระดานคิว วันนี้ + วันถัดไปที่มีคนจอง: เลขคิว เวลา สถานะ เท่านั้น — ไม่มีข้อมูลส่วนบุคคล
 function renderBoard() {
-  const q = C.board.slice().sort((a, b) => (a.time + String(a.queue).padStart(4, '0')).localeCompare(b.time + String(b.queue).padStart(4, '0')));
-  const serving = q.filter(x => x.status === STATUSES[1]).map(x => x.queue);
-  $('#bDate').textContent = thaiDate(C.today);
+  const key = x => x.date + x.time + String(x.queue).padStart(4, '0');
+  const q = C.board.map(x => ({ date: C.today, ...x })).sort((a, b) => key(a).localeCompare(key(b)));
+  const serving = q.filter(x => x.date === C.today && x.status === STATUSES[1]).map(x => x.queue);
   $('#now').innerHTML = serving.length ? `กำลังดำเนินการ: คิวที่ <b>${serving.join(', ')}</b>` : 'ยังไม่มีคิวที่กำลังดำเนินการ';
-  $('#board').innerHTML = q.length ? q.map(x => `<li class="st-${STATUSES.indexOf(x.status)}"><b>${x.queue}</b><span>${esc(x.time)}</span><em>${esc(x.status)}</em></li>`).join('')
-    : '<li class="empty">ยังไม่มีคิววันนี้</li>';
+  const days = [C.today, ...new Set(q.map(x => x.date).filter(d => d !== C.today))];
+  $('#board').innerHTML = days.map(d => {
+    const items = q.filter(x => x.date === d);
+    return `<h3 class="day">${d === C.today ? 'วันนี้ · ' : ''}${thaiDate(d)}</h3><ol class="queue">${items.length
+      ? items.map(x => `<li class="st-${STATUSES.indexOf(x.status)}"><b>${x.queue}</b><span>${esc(x.time)}</span><em>${esc(x.status)}</em></li>`).join('')
+      : '<li class="empty">ยังไม่มีคิววันนี้</li>'}</ol>`;
+  }).join('');
 }
 
 async function refresh() {

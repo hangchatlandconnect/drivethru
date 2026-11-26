@@ -58,7 +58,7 @@ const Demo = {
   today: () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10),
   config() {
     const taken = {}, today = this.today();
-    const board = this.rows().filter(r => r.date === today).map(r => ({ queue: r.queue, time: r.slot || r.created.slice(11, 16), status: r.status }));
+    const board = this.rows().filter(r => r.date >= today).map(r => ({ date: r.date, queue: r.queue, time: r.slot || r.created.slice(11, 16), status: r.status }));
     this.rows().filter(r => r.source === 'จองออนไลน์' && r.status !== 'ยกเลิก')
       .forEach(r => taken[r.date + '|' + r.slot] = (taken[r.date + '|' + r.slot] || 0) + 1);
     return {
@@ -85,7 +85,7 @@ const Demo = {
     }
     if (b.action === 'book' || b.action === 'add') {
       if (!b.name) throw new Error('กรุณากรอกชื่อ-สกุล');
-      const id = Math.random().toString(36).slice(2, 8).toUpperCase(), date = b.date || this.today();
+      const id = 'DT' + String(rows.reduce((m, r) => Math.max(m, +(/^DT(\d+)$/.exec(r.id) || [0, 0])[1]), 0) + 1).padStart(4, '0'), date = b.date || this.today();
       const queue = rows.filter(r => r.date === date).reduce((m, r) => Math.max(m, r.queue), 0) + 1;
       rows.push({ id, queue, created: now, source: b.action === 'book' ? 'จองออนไลน์' : 'หน้างาน', date,
         slot: b.slot || '', name: b.name, phone: b.phone || '', plate: b.plate || '', service: b.service === OTHER ? OTHER + ': ' + b.other : b.service, note: b.note || '',

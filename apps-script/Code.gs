@@ -2,7 +2,7 @@
  * Drive-Thru สำนักงานที่ดินจังหวัดลำปาง สาขาห้างฉัตร — หลังบ้านบน Google Sheet
  * วางทั้งไฟล์นี้ใน Apps Script ของชีต (ส่วนขยาย → Apps Script)
  *
- *   GET                                         → ตั้งค่า + จำนวนคิวที่จองแล้วต่อช่วงเวลา + กระดานคิววันนี้ (ไม่มีข้อมูลส่วนบุคคล)
+ *   GET                                         → ตั้งค่า + จำนวนคิวที่จองแล้วต่อช่วงเวลา + กระดานคิววันนี้และล่วงหน้า (ไม่มีข้อมูลส่วนบุคคล)
  *   POST {action:'book', ...ฟอร์ม}              → ประชาชนจองคิว → {code}
  *   POST {action:'login', user, pass}           → {token} ใช้ได้ 8 ชม.
  *   POST {action:'list', token, date}           → รายการของวันนั้น (เฉพาะเจ้าหน้าที่)
@@ -37,7 +37,7 @@ function doGet() {
     const today = today_();
     const taken = {}, board = [];
     rows_().forEach(r => {
-      if (r.date === today) board.push({ queue: Number(r.queue) || 0, time: r.slot || r.created.slice(11, 16), status: r.status });
+      if (r.date >= today) board.push({ date: r.date, queue: Number(r.queue) || 0, time: r.slot || r.created.slice(11, 16), status: r.status });
       if (r.source === 'จองออนไลน์' && r.date >= today && r.status !== 'ยกเลิก') {
         const k = r.date + '|' + r.slot;
         taken[k] = (taken[k] || 0) + 1;
@@ -172,8 +172,9 @@ function dateError_(d, s) {
 
 // เรียกภายใต้ lock เท่านั้น — ลำดับคิวนับต่อวัน (ต่อจากเลขมากสุดของวันนั้น) รวมจองออนไลน์และหน้างาน
 function append_(source, f) {
-  const code = Utilities.getUuid().replace(/-/g, '').slice(0, 6).toUpperCase();
-  const queue = rows_().filter(r => r.date === f.date).reduce((m, r) => Math.max(m, Number(r.queue) || 0), 0) + 1;
+  const rows = rows_();
+  const code = nextCode_(rows.map(r => r.id));
+  const queue = rows.filter(r => r.date === f.date).reduce((m, r) => Math.max(m, Number(r.queue) || 0), 0) + 1;
   const now = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss');
   const rec = { id: code, created: now, source: source, status: 'รอ', staffNote: '', updated: now, queue: queue };
   Object.keys(f).forEach(k => rec[k] = f[k]);
@@ -181,6 +182,12 @@ function append_(source, f) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_REQ);
   sh.getRange(sh.getLastRow() + 1, 1, 1, COLS.length).setNumberFormat('@').setValues([COLS.map(c => text_(rec[c]))]);
   return { code: code, queue: queue };
+}
+
+// รหัสจองเรียงต่อกันทั้งระบบ DT0001, DT0002, … (รหัสแบบเก่าที่ไม่ขึ้นต้น DT ไม่นับ)
+function nextCode_(ids) {
+  const n = ids.reduce((m, id) => { const x = /^DT(\d+)$/.exec(id); return x ? Math.max(m, Number(x[1])) : m; }, 0) + 1;
+  return 'DT' + String(n).padStart(4, '0');
 }
 
 function setStatus_(b) {

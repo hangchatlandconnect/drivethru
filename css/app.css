@@ -96,7 +96,7 @@ tr.st-3 td:not(:nth-child(8)):not(:nth-child(9)) { color: var(--muted); text-dec
 
 /* กระดานคิววันนี้ (หน้าแรก) */
 .board { padding: 20px 24px; margin-bottom: 20px; display: grid; gap: 10px; }
-.board-hd { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.board .day { font-size: 1rem; margin-top: 6px; color: var(--green-700); }
 .board .hint { margin: 0; font-size: .85rem; }
 .now { margin: 0; padding: 10px 14px; border-radius: 8px; background: var(--gold-soft); color: #5a430c; font-weight: 500; }
 .now b { font: 600 1.4rem var(--head); color: var(--green-950); }
