@@ -12,11 +12,11 @@
  * ครั้งแรก: รัน setup() → รัน setPassword() → Deploy เป็น Web app (Execute as: Me, Who has access: Anyone)
  */
 
-const SHEET_REQ = 'รายการ';
+const SHEET_REQ = 'Drive-Thru'; // แท็บเดิมของสำนักงาน — 6 คอลัมน์แรกคงชื่อเดิม
 const SHEET_SET = 'ตั้งค่า';
-const COLS = ['id', 'created', 'source', 'date', 'slot', 'name', 'phone', 'plate', 'service', 'note', 'status', 'staffNote', 'updated', 'queue'];
-const HEAD = ['รหัส', 'บันทึกเมื่อ', 'ช่องทาง', 'วันที่', 'ช่วงเวลา', 'ชื่อ-สกุล', 'โทรศัพท์', 'ทะเบียนรถ', 'บริการ', 'หมายเหตุ', 'สถานะ', 'หมายเหตุเจ้าหน้าที่', 'แก้ไขล่าสุด', 'ลำดับคิว'];
-const STATUSES = ['รอ', 'กำลังให้บริการ', 'เสร็จสิ้น', 'ยกเลิก'];
+const COLS = ['date', 'name', 'phone', 'service', 'note', 'status', 'queue', 'slot', 'plate', 'id', 'source', 'staffNote', 'created', 'updated'];
+const HEAD = ['วันที่จอง', 'ชื่อผู้จอง', 'เบอร์โทรศัพท์', 'ดำเนินการเรื่อง', 'หมายเหตุ', 'สถานะ', 'ลำดับคิว', 'ช่วงเวลา', 'ทะเบียนรถ', 'รหัสจอง', 'ช่องทาง', 'หมายเหตุเจ้าหน้าที่', 'บันทึกเมื่อ', 'แก้ไขล่าสุด'];
+const STATUSES = ['รอ', 'อยู่ระหว่างดำเนินการ', 'ดำเนินการเสร็จสิ้น', 'ยกเลิก']; // ตามแท็บ อ้างอิง + รอ/ยกเลิก
 const TZ = 'Asia/Bangkok';
 const OTHER = 'อื่นๆ'; // เลือกบริการนี้แล้วต้องพิมพ์ระบุ
 const SESSION_SECONDS = 8 * 60 * 60;
@@ -177,7 +177,9 @@ function append_(source, f) {
   const now = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss');
   const rec = { id: code, created: now, source: source, status: 'รอ', staffNote: '', updated: now, queue: queue };
   Object.keys(f).forEach(k => rec[k] = f[k]);
-  SpreadsheetApp.getActive().getSheetByName(SHEET_REQ).appendRow(COLS.map(c => text_(rec[c])));
+  // appendRow แปลงชนิดเอง (เบอร์ 08… กลายเป็นตัวเลข 0 หาย, วันที่กลายเป็น Date) → ตั้งรูปแบบข้อความก่อนแล้วค่อยเขียน
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_REQ);
+  sh.getRange(sh.getLastRow() + 1, 1, 1, COLS.length).setNumberFormat('@').setValues([COLS.map(c => text_(rec[c]))]);
   return { code: code, queue: queue };
 }
 
@@ -187,12 +189,14 @@ function setStatus_(b) {
   lock.waitLock(20000);
   try {
     const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_REQ);
-    const ids = sh.getLastRow() < 2 ? [] : sh.getRange(2, 1, sh.getLastRow() - 1, 1).getDisplayValues().map(r => r[0]);
+    const col = k => COLS.indexOf(k) + 1;
+    const ids = sh.getLastRow() < 2 ? [] : sh.getRange(2, col('id'), sh.getLastRow() - 1, 1).getDisplayValues().map(r => r[0]);
     const i = ids.indexOf(String(b.id));
     if (i < 0) throw new Error('ไม่พบรายการนี้');
-    const row = i + 2, c = COLS.indexOf('status') + 1;
-    sh.getRange(row, c, 1, 3).setValues([[b.status, text_(String(b.staffNote || '').slice(0, 500)),
-      Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss')]]);
+    const row = i + 2;
+    sh.getRange(row, col('status')).setValue(b.status);
+    sh.getRange(row, col('staffNote')).setValue(text_(String(b.staffNote || '').slice(0, 500)));
+    sh.getRange(row, col('updated')).setValue(Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss'));
     return true;
   } finally {
     lock.releaseLock();
@@ -261,12 +265,16 @@ function setPassword() {
   Logger.log('ตั้งค่าแล้ว: ผู้ใช้ ' + USER + ' — อย่าลืมลบรหัสผ่านออกจากโค้ด');
 }
 
-/** สร้างชีต รายการ / ตั้งค่า (ไม่แตะชีตอื่น และไม่เขียนทับชีตที่มีอยู่แล้ว) */
+/** เตรียมแท็บ Drive-Thru (หัวคอลัมน์) และสร้างแท็บ ตั้งค่า — ไม่แตะแท็บอื่น ไม่ลบข้อมูลที่มีอยู่ */
 function setup() {
   const ss = SpreadsheetApp.getActive();
-  if (!ss.getSheetByName(SHEET_REQ)) {
-    const sh = ss.insertSheet(SHEET_REQ);
-    sh.getRange('A:N').setNumberFormat('@'); // วันที่/เบอร์โทรเก็บเป็นข้อความ — ไม่ให้ชีตแปลงเป็นวันที่หรือตัด 0 หน้า
+  const sh = ss.getSheetByName(SHEET_REQ) || ss.insertSheet(SHEET_REQ);
+  if (sh.getLastRow() > 1) {
+    const now = sh.getRange(1, 1, 1, HEAD.length).getDisplayValues()[0];
+    const bad = HEAD.filter((h, i) => now[i] !== h);
+    if (bad.length) throw new Error('แท็บ ' + SHEET_REQ + ' มีข้อมูลอยู่แล้วแต่หัวคอลัมน์ไม่ตรง: ' + bad.join(', '));
+  } else {
+    sh.getRange(1, 1, sh.getMaxRows(), HEAD.length).setNumberFormat('@'); // วันที่/เบอร์โทรเป็นข้อความ — ไม่ให้ชีตแปลงวันที่หรือตัด 0 หน้า
     sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]).setFontWeight('bold');
     sh.setFrozenRows(1);
   }

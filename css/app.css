@@ -78,8 +78,8 @@ td select, td input { min-height: 40px; }
 .none { text-align: center; color: var(--muted); padding: 32px; }
 .tag { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--green-100); color: var(--green-900); font-size: .85rem; white-space: nowrap; }
 .tag.walk { background: var(--gold-soft); color: #5a430c; }
-tr.st-1 { background: #fff8e6; }          /* กำลังให้บริการ */
-tr.st-2 td:not(:nth-child(8)):not(:nth-child(9)) { color: var(--muted); } /* เสร็จสิ้น */
+tr.st-1 { background: #fff8e6; }          /* อยู่ระหว่างดำเนินการ */
+tr.st-2 td:not(:nth-child(8)):not(:nth-child(9)) { color: var(--muted); } /* ดำเนินการเสร็จสิ้น */
 tr.st-3 td:not(:nth-child(8)):not(:nth-child(9)) { color: var(--muted); text-decoration: line-through; } /* ยกเลิก */
 .qno { font: 600 1.4rem/1.2 var(--head); color: var(--green-700); }
 

@@ -30,9 +30,9 @@ function closedReason(d) {
 // กระดานคิววันนี้: เลขคิว เวลา สถานะ เท่านั้น — ไม่มีข้อมูลส่วนบุคคล
 function renderBoard() {
   const q = C.board.slice().sort((a, b) => (a.time + String(a.queue).padStart(4, '0')).localeCompare(b.time + String(b.queue).padStart(4, '0')));
-  const serving = q.filter(x => x.status === 'กำลังให้บริการ').map(x => x.queue);
+  const serving = q.filter(x => x.status === STATUSES[1]).map(x => x.queue);
   $('#bDate').textContent = thaiDate(C.today);
-  $('#now').innerHTML = serving.length ? `กำลังให้บริการ: คิวที่ <b>${serving.join(', ')}</b>` : 'ยังไม่มีคิวที่กำลังให้บริการ';
+  $('#now').innerHTML = serving.length ? `กำลังดำเนินการ: คิวที่ <b>${serving.join(', ')}</b>` : 'ยังไม่มีคิวที่กำลังดำเนินการ';
   $('#board').innerHTML = q.length ? q.map(x => `<li class="st-${STATUSES.indexOf(x.status)}"><b>${x.queue}</b><span>${esc(x.time)}</span><em>${esc(x.status)}</em></li>`).join('')
     : '<li class="empty">ยังไม่มีคิววันนี้</li>';
 }

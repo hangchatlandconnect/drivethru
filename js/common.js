@@ -1,5 +1,5 @@
 // ใส่ URL ของ Apps Script web app (ลงท้ายด้วย /exec) — เว้นว่าง = โหมดตัวอย่าง เก็บข้อมูลในเบราว์เซอร์นี้เท่านั้น
-const SCRIPT_URL = '';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzC1R_m0CD-tL9_CU9mpqn6KGLmmUFq20EY3ZFCYnd0HPAdzbPAzSXeO_MoXjlExZaXmA/exec';
 const DEMO = !SCRIPT_URL;
 const OTHER = 'อื่นๆ'; // เลือกบริการนี้แล้วต้องพิมพ์ระบุ (ตรงกับ Code.gs)
 
@@ -37,7 +37,7 @@ function bindOther(select, box) {
   });
 }
 
-const STATUSES = ['รอ', 'กำลังให้บริการ', 'เสร็จสิ้น', 'ยกเลิก'];
+const STATUSES = ['รอ', 'อยู่ระหว่างดำเนินการ', 'ดำเนินการเสร็จสิ้น', 'ยกเลิก']; // ตรงกับ Code.gs
 
 // วันที่ yyyy-mm-dd → "พฤ. 26 พ.ย. 2569"
 const thaiDate = d => new Date(d + 'T00:00:00').toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
