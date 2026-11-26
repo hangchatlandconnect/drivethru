@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>เจ้าหน้าที่ Drive-Thru — สำนักงานที่ดิน สาขาห้างฉัตร</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css?v=1">
+</head>
+<body>
+<header class="top"><div class="in">
+  <div class="brand"><img class="logo" src="assets/logo.png" alt="ตราสำนักงานที่ดิน" width="64" height="63">
+    <div><h1>Drive-Thru · เจ้าหน้าที่</h1><p>สำนักงานที่ดินจังหวัดลำปาง สาขาอำเภอห้างฉัตร</p></div></div>
+  <nav class="topnav"><a href="index.html">หน้าจองคิว</a> <button class="link" id="logout" hidden>ออกจากระบบ</button></nav>
+</div></header>
+<div class="demo" id="demo" hidden>โหมดตัวอย่าง — ข้อมูลเก็บในเบราว์เซอร์นี้เท่านั้น ยังไม่ได้เชื่อมกับ Google Sheet</div>
+
+<form class="panel login" id="login" hidden>
+  <h2>เข้าสู่ระบบเจ้าหน้าที่</h2>
+  <label>ชื่อผู้ใช้ <input id="lu" autocomplete="username" required></label>
+  <label>รหัสผ่าน <input id="lp" type="password" autocomplete="current-password" required></label>
+  <p class="err" id="lmsg" role="alert"></p>
+  <button class="btn primary" id="lbtn">เข้าสู่ระบบ</button>
+</form>
+
+<main class="wide-main" id="app" hidden>
+  <div class="bar">
+    <label class="inline">วันที่ <input type="date" id="day"></label>
+    <button class="btn" id="reload">รีเฟรช</button>
+    <span class="spacer"></span>
+    <button class="btn primary" id="addOpen">+ บันทึกรับเรื่องหน้างาน</button>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="panel tablewrap">
+    <table>
+      <thead><tr><th>รหัส</th><th>เวลา</th><th>ผู้รับบริการ</th><th>ทะเบียนรถ</th><th>บริการ / หมายเหตุ</th><th>ช่องทาง</th><th>สถานะ</th><th>หมายเหตุเจ้าหน้าที่</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</main>
+
+<dialog id="add" aria-labelledby="aTitle">
+  <form class="form" id="addForm" novalidate>
+    <div class="dlg-hd"><h2 id="aTitle">บันทึกรับเรื่องหน้างาน</h2><button type="button" class="x" id="aClose" aria-label="ปิด">×</button></div>
+    <label>ชื่อ-สกุล <input name="name" maxlength="100" required></label>
+    <div class="grid2">
+      <label>โทรศัพท์ <small>(ถ้ามี)</small> <input name="phone" type="tel" inputmode="numeric" maxlength="12"></label>
+      <label>ทะเบียนรถ <small>(ถ้ามี)</small> <input name="plate" maxlength="20"></label>
+    </div>
+    <label>บริการ <select name="service" id="aService" required></select></label>
+    <label>หมายเหตุ <textarea name="note" rows="2" maxlength="500"></textarea></label>
+    <p class="err" id="aErr" role="alert"></p>
+    <button class="btn primary" id="aBtn">บันทึก</button>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="js/common.js?v=1"></script>
+<script src="js/staff.js?v=1"></script>
+</body>
+</html>

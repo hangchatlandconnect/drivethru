@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>จองคิว Drive-Thru — สำนักงานที่ดิน สาขาห้างฉัตร</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css?v=1">
+</head>
+<body>
+<header class="top"><div class="in">
+  <div class="brand"><img class="logo" src="assets/logo.png" alt="ตราสำนักงานที่ดิน" width="64" height="63">
+    <div><h1>จองคิวบริการ Drive-Thru</h1><p>สำนักงานที่ดินจังหวัดลำปาง สาขาอำเภอห้างฉัตร</p></div></div>
+  <a href="staff.html">สำหรับเจ้าหน้าที่</a>
+</div></header>
+<div class="demo" id="demo" hidden>โหมดตัวอย่าง — ข้อมูลเก็บในเบราว์เซอร์นี้เท่านั้น ยังไม่ได้เชื่อมกับ Google Sheet</div>
+
+<main class="narrow">
+  <form class="panel form" id="book" novalidate>
+    <p class="lead">จองช่วงเวลาล่วงหน้า แล้วขับรถเข้าช่อง Drive-Thru ตามเวลานัด ไม่ต้องลงจากรถ</p>
+    <div class="grid2">
+      <label>วันที่ต้องการรับบริการ <input type="date" id="date" name="date" required></label>
+      <label>ช่วงเวลา <select id="slot" name="slot" required><option value="">— เลือกวันที่ก่อน —</option></select></label>
+    </div>
+    <label>บริการ <select id="service" name="service" required></select></label>
+    <div class="grid2">
+      <label>ชื่อ-สกุล <input name="name" autocomplete="name" maxlength="100" required></label>
+      <label>โทรศัพท์ <input name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="12" placeholder="08xxxxxxxx" required></label>
+    </div>
+    <label>ทะเบียนรถ <small>(ถ้ามี)</small> <input name="plate" maxlength="20" placeholder="เช่น กข 1234 ลำปาง"></label>
+    <label>รายละเอียดเพิ่มเติม <small>(ถ้ามี)</small> <textarea name="note" rows="3" maxlength="500"></textarea></label>
+    <label class="trap" aria-hidden="true">เว็บไซต์ <input name="website" tabindex="-1" autocomplete="off"></label>
+    <label class="check"><input type="checkbox" name="consent" required> ยินยอมให้สำนักงานใช้ข้อมูลนี้เพื่อการนัดหมายและติดต่อกลับเท่านั้น</label>
+    <p class="err" id="err" role="alert"></p>
+    <button class="btn primary big" id="submit">ยืนยันการจอง</button>
+  </form>
+
+  <section class="panel done" id="done" hidden>
+    <h2>จองคิวเรียบร้อย</h2>
+    <p>รหัสการจองของท่าน</p>
+    <p class="code" id="code"></p>
+    <dl id="summary"></dl>
+    <p class="hint">กรุณาจดหรือถ่ายภาพหน้าจอนี้ไว้ แจ้งรหัสกับเจ้าหน้าที่ที่ช่อง Drive-Thru · หากต้องการยกเลิกหรือเปลี่ยนเวลา กรุณาโทรแจ้งสำนักงาน</p>
+    <button class="btn" id="again">จองคิวอื่น</button>
+  </section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="js/common.js?v=1"></script>
+<script src="js/book.js?v=1"></script>
+</body>
+</html>
